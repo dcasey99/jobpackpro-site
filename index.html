@@ -72,10 +72,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
 
   <script>
-    // Initialize the map with a default center and zoom level
     var map = L.map('map').setView([51.505, -0.09], 13); // Default coordinates for map view (London)
 
-    // Add a tile layer to the map (OpenStreetMap)
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
@@ -111,9 +109,9 @@
               // Log extracted data to see what we got
               console.log("Extracted Data:", extractedData);
 
-              // Process the extracted data to find the GRID REF for WP1 and plot markers
+              // Look for the line with the correct GRID REF for WP1 and extract it
               extractedData.forEach(function(text) {
-                var gridRefData = extractGridRefs(text);
+                var gridRefData = extractGridRefsForWP1(text);
                 if (gridRefData) {
                   console.log("Grid Ref Data for WP1:", gridRefData); // Log the extracted grid reference data
                   addMarker(gridRefData); // Add the marker to the map
@@ -129,21 +127,21 @@
 
     // Function to add markers to the map based on the extracted GRID REFs
     function addMarker(gridRefData) {
-      // For now, we'll use fixed coordinates as the map's default behavior
+      // For now, we will use fixed coordinates as the map's default behavior
       var lat = 51.505; 
       var lng = -0.09; // Placeholder coordinates for testing purposes
 
       // Display the GRID REF in the popup content
       var popupContent = "GRID REF: " + gridRefData.eastings + "," + gridRefData.northings;
 
-      // Add a marker at the fixed coordinates
+      // Add a marker to the map at the fixed coordinates
       L.marker([lat, lng]).addTo(map)
         .bindPopup(popupContent)
         .openPopup();
     }
 
-    // Function to extract GRID REFs from the text (specifically for WP1)
-    function extractGridRefs(text) {
+    // Function to extract GRID REFs from the text specifically for WP1
+    function extractGridRefsForWP1(text) {
       // Look for the pattern "WP1:<anything> AT GRID REF: <Eastings>,<Northings>"
       var match = text.match(/WP1:[^G]+GRID REF:\s*(\d{6}),\s*(\d{6})/);
 
