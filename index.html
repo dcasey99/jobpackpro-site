@@ -13,7 +13,6 @@
 
   <!-- Inline Custom Styles for the Map -->
   <style>
-    /* General styles */
     body {
       font-family: Arial, sans-serif;
       background-color: #f4f4f4;
@@ -21,38 +20,30 @@
       padding: 20px;
       text-align: center;
     }
-
     h1 {
       margin-top: 0;
     }
-
-    /* Map container with proper height and width */
     #map {
       width: 100%;
       height: 400px;
       margin-top: 20px;
-      background-color: #e0e0e0; /* Light background to show the map container */
+      background-color: #e0e0e0;
     }
-
-    /* Form Styling */
     form {
       display: flex;
       flex-direction: column;
       align-items: center;
       margin-top: 20px;
     }
-
     label {
       font-size: 16px;
       margin-bottom: 10px;
     }
-
     input[type="file"] {
       margin-bottom: 10px;
       padding: 10px;
       font-size: 16px;
     }
-
     button {
       padding: 10px 20px;
       font-size: 16px;
@@ -62,7 +53,6 @@
       border: none;
       border-radius: 5px;
     }
-
     button:hover {
       background-color: #45a049;
     }
@@ -72,63 +62,38 @@
   <h1>JobPackPro Prototype</h1>
   <p>Welcome to the JobPackPro field prototype.</p>
 
-  <!-- Map container -->
   <div id="map"></div>
 
-  <!-- File Upload Form -->
   <form id="upload-form">
     <label for="pdf-upload">Upload Job Pack (PDF):</label>
     <input type="file" id="pdf-upload" accept="application/pdf" />
     <button type="submit">Upload</button>
   </form>
 
-  <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
-  <!-- pdf.js (with worker script) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
-
-  <!-- Custom JavaScript -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.7.2/proj4.js"></script> <!-- proj4js for coordinate transformation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.7.2/proj4.js"></script>
 
   <script>
-    // Initialize the map with a default center and zoom level
-    var map = L.map('map').setView([51.505, -0.09], 13); // Lat, Lng, zoom level
+    var map = L.map('map').setView([51.505, -0.09], 13);
 
-    // Add a tile layer (OpenStreetMap in this case)
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
 
-    // Add a marker (for now, as a placeholder)
-    L.marker([51.5, -0.09]).addTo(map)
-      .bindPopup('A test marker')
-      .openPopup();
-
-    // Handle PDF Upload and Parsing
     document.getElementById('upload-form').addEventListener('submit', function(event) {
-      event.preventDefault();  // Prevent the form from submitting
+      event.preventDefault();
 
-      console.log("Form submitted");  // Debug: Form submission
-
-      // Get the uploaded file
       var fileInput = document.getElementById('pdf-upload');
       var file = fileInput.files[0];
-      if (file) {
-        console.log("File selected: ", file.name); // Debug: Log the selected file name
 
-        // Create a file reader to load the file
+      if (file) {
         var reader = new FileReader();
         reader.onload = function(e) {
           var pdfData = new Uint8Array(e.target.result);
-          console.log("PDF data loaded: ", pdfData); // Debug: Log loaded PDF data
 
-          // Use pdf.js to load and parse the PDF
           pdfjsLib.getDocument(pdfData).promise.then(function(pdf) {
-            console.log("PDF loaded, number of pages: ", pdf.numPages); // Debug: Log number of pages
-
-            // Extract text from each page of the PDF
             var pagePromises = [];
             for (var pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
               pagePromises.push(pdf.getPage(pageNum).then(function(page) {
@@ -136,71 +101,53 @@
               }));
             }
 
-            // When all pages are processed, process the extracted text
             Promise.all(pagePromises).then(function(pagesText) {
               var extractedData = [];
               pagesText.forEach(function(pageText) {
                 pageText.items.forEach(function(item) {
-                  console.log("Extracted text: ", item.str); // Debug: Log extracted text
-
-                  // Assuming the text contains Eastings and Northings
                   extractedData.push(item.str);
                 });
               });
 
-              // Pass the extracted data to the map (we’ll handle that below)
               addMarkersToMap(extractedData);
             });
           });
         };
 
         reader.readAsArrayBuffer(file);
-      } else {
-        console.log("No file selected.");  // Debug: Log if no file is selected
       }
     });
 
-    // Function to add markers to the map based on the extracted data
     function addMarkersToMap(data) {
       data.forEach(function(item) {
-        console.log("Extracted Text: ", item);  // Log the extracted text
-
-        // Extract Eastings and Northings from the text
         var coordinates = extractCoordinates(item);
 
-        // If coordinates are found, convert and add a marker to the map
         if (coordinates) {
-          console.log("Adding marker at: ", coordinates);  // Log coordinates for debugging
           L.marker([coordinates.lat, coordinates.lng]).addTo(map)
-            .bindPopup(item) // Display the extracted text in the popup
+            .bindPopup(item)
             .openPopup();
         }
       });
     }
 
-    // Helper function to extract Eastings and Northings and convert to lat/lng
     function extractCoordinates(text) {
-      // Example: Find Eastings and Northings in the format "Eastings Northings" (e.g., 654321 123456)
-      var match = text.match(/(\d{6})\s+(\d{6})/);
+      // Look for the pattern "GRID REF: Easting, Northing" (e.g., GRID REF: 354039,799852)
+      var match = text.match(/GRID REF:\s*(\d{6}),\s*(\d{6})/);
 
-      // If Eastings and Northings are found, convert them to lat/lng
       if (match) {
-        console.log("Eastings and Northings found: ", match[1], match[2]);  // Log Eastings and Northings
+        console.log("Eastings and Northings found: ", match[1], match[2]);
 
-        // Convert Eastings and Northings to Latitude and Longitude using proj4js (WGS84)
         var eastings = parseInt(match[1]);
         var northings = parseInt(match[2]);
 
-        // Example transformation from OSGB36 to WGS84
+        // Convert Eastings and Northings to Latitude and Longitude using proj4js (WGS84)
         var wgs84Coordinates = proj4('EPSG:27700', 'EPSG:4326', [eastings, northings]);
 
         return { lat: wgs84Coordinates[1], lng: wgs84Coordinates[0] };
       }
 
-      // If no Eastings and Northings found, return null
       return null;
     }
   </script>
-
 </body>
 </html>
