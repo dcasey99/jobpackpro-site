@@ -18,8 +18,17 @@
   <!-- Map container -->
   <div id="map" style="width: 100%; height: 400px;"></div>
 
+  <!-- File Upload Form -->
+  <form id="upload-form">
+    <label for="pdf-upload">Upload Job Pack (PDF):</label>
+    <input type="file" id="pdf-upload" accept="application/pdf" />
+    <button type="submit">Upload</button>
+  </form>
+
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <!-- pdf.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
 
   <!-- Custom JavaScript -->
   <script>
@@ -35,7 +44,94 @@
     L.marker([51.5, -0.09]).addTo(map)
       .bindPopup('A test marker')
       .openPopup();
+
+    // Handle PDF Upload and Parsing
+    document.getElementById('upload-form').addEventListener('submit', function(event) {
+      event.preventDefault();
+
+      // Get the uploaded file
+      var fileInput = document.getElementById('pdf-upload');
+      var file = fileInput.files[0];
+
+      if (file) {
+        // Create a file reader to load the file
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          var pdfData = new Uint8Array(e.target.result);
+
+          // Use pdf.js to load and parse the PDF
+          pdfjsLib.getDocument(pdfData).promise.then(function(pdf) {
+            // Extract text from each page of the PDF
+            var pagePromises = [];
+            for (var pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+              pagePromises.push(pdf.getPage(pageNum).then(function(page) {
+                return page.getTextContent();
+              }));
+            }
+
+            // When all pages are processed, process the extracted text
+            Promise.all(pagePromises).then(function(pagesText) {
+              var extractedData = [];
+              pagesText.forEach(function(pageText) {
+                // Loop through the text items of each page
+                pageText.items.forEach(function(item) {
+                  // Check for data you need (e.g., grid refs, structure types)
+                  // For simplicity, we just log all text here:
+                  console.log(item.str);
+                  
+                  // Assuming the text contains coordinates and grid references
+                  // Example: Extract some data (this will be tailored based on your job pack structure)
+                  extractedData.push(item.str);
+                });
+              });
+
+              // Now you have the extracted data. You can start using this data for the map markers
+              console.log(extractedData);
+              
+              // Here we would pass the extracted data to the map (we’ll handle that below)
+              addMarkersToMap(extractedData);
+            });
+          });
+        };
+
+        // Read the uploaded PDF file
+        reader.readAsArrayBuffer(file);
+      }
+    });
+
+    // Function to add markers to the map based on the extracted data
+    function addMarkersToMap(data) {
+      // Example: We assume `data` contains coordinates and grid references
+      // This part will need to be adjusted based on the actual data format in the PDF
+      
+      data.forEach(function(item) {
+        // Extract coordinates from the data (this is just an example)
+        // You’ll need to adapt this to match how your job pack data is formatted
+        var coordinates = extractCoordinates(item);
+        
+        if (coordinates) {
+          var lat = coordinates.lat;
+          var lng = coordinates.lng;
+
+          // Add a marker on the map for each coordinate
+          L.marker([lat, lng]).addTo(map)
+            .bindPopup(item)  // Using the item data as a popup for the marker
+            .openPopup();
+        }
+      });
+    }
+
+    // Helper function to extract coordinates (adapt this based on your PDF data structure)
+    function extractCoordinates(text) {
+      // Example: Find coordinates in the format "lat,lng" within the text
+      var match = text.match(/([+-]?\d+\.\d+),\s*([+-]?\d+\.\d+)/);
+      if (match) {
+        return { lat: parseFloat(match[1]), lng: parseFloat(match[2]) };
+      }
+      return null;
+    }
   </script>
 
 </body>
 </html>
+
