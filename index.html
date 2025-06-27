@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -80,24 +79,26 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
 
   <script>
-    // Wait for the submit button to be clicked
+    // Debugging log to check when the button is clicked
     document.getElementById('upload-button').addEventListener('click', function(event) {
       event.preventDefault();  // Prevent form submission
-      console.log("Submit button clicked!");
+      console.log("Submit button clicked!");  // This will show in console when submit is clicked
 
       var fileInput = document.getElementById('pdf-upload');
       var file = fileInput.files[0];
 
       if (file) {
-        console.log("File selected: ", file.name);
+        console.log("File selected: ", file.name);  // Check if the file is selected
 
         var reader = new FileReader();
         reader.onload = function(e) {
           var pdfData = new Uint8Array(e.target.result);
-          console.log("PDF data loaded...");
+          console.log("PDF data loaded...");  // Check if the file data is being read correctly
 
           // Using PDF.js to extract text from the PDF
           pdfjsLib.getDocument(pdfData).promise.then(function(pdf) {
+            console.log("PDF loaded. Number of pages: ", pdf.numPages);  // Log the number of pages
+
             var pagePromises = [];
             for (var pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
               pagePromises.push(pdf.getPage(pageNum).then(function(page) {
@@ -113,11 +114,11 @@
                 });
               });
 
-              console.log("Extracted Data:", extractedData);
+              console.log("Extracted Data:", extractedData);  // Log the extracted text
 
               // Parse the extracted data for WP, WP type, and GRID REF
               var parsedData = parseExtractedData(extractedData);
-              console.log("Parsed Data: ", parsedData);
+              console.log("Parsed Data: ", parsedData);  // Log the parsed data
 
               displayDataInTable(parsedData);
             });
@@ -155,7 +156,7 @@
       tableBody.innerHTML = ''; // Clear any existing data
 
       if (data.length === 0) {
-        console.log("No valid WP data found!");
+        console.log("No valid WP data found!");  // Log when no valid data is found
       }
 
       data.forEach(function(item) {
