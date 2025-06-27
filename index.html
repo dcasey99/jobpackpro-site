@@ -80,7 +80,7 @@
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
 
-    // Handle the file upload
+    // Handle file upload
     document.getElementById('upload-form').addEventListener('submit', function(event) {
       event.preventDefault();
 
@@ -111,12 +111,12 @@
               // Log extracted data to see what we got
               console.log("Extracted Data:", extractedData);
 
-              // Process the extracted data to find GRID REFs and plot markers
+              // Process the extracted data to find the GRID REF for WP1 and plot markers
               extractedData.forEach(function(text) {
                 var gridRefData = extractGridRefs(text);
                 if (gridRefData) {
-                  console.log("Grid Ref Data:", gridRefData); // Log the extracted grid reference data
-                  addMarker(gridRefData);
+                  console.log("Grid Ref Data for WP1:", gridRefData); // Log the extracted grid reference data
+                  addMarker(gridRefData); // Add the marker to the map
                 }
               });
             });
@@ -129,29 +129,29 @@
 
     // Function to add markers to the map based on the extracted GRID REFs
     function addMarker(gridRefData) {
-      // Example: Using fixed coordinates for now, as we are not converting the grid refs yet
+      // For now, we'll use fixed coordinates as the map's default behavior
       var lat = 51.505; 
-      var lng = -0.09; // Placeholder coordinates (we'll replace these with actual data in the future)
+      var lng = -0.09; // Placeholder coordinates for testing purposes
 
-      // Create the popup content showing the Eastings and Northings
+      // Display the GRID REF in the popup content
       var popupContent = "GRID REF: " + gridRefData.eastings + "," + gridRefData.northings;
 
-      // Add a marker to the map at the fixed coordinates
+      // Add a marker at the fixed coordinates
       L.marker([lat, lng]).addTo(map)
         .bindPopup(popupContent)
         .openPopup();
     }
 
-    // Function to extract Eastings and Northings from the text
+    // Function to extract GRID REFs from the text (specifically for WP1)
     function extractGridRefs(text) {
-      // Look for the pattern "GRID REF: <Eastings>,<Northings>"
-      var match = text.match(/GRID REF:\s*(\d{6}),\s*(\d{6})/);
+      // Look for the pattern "WP1:<anything> AT GRID REF: <Eastings>,<Northings>"
+      var match = text.match(/WP1:[^G]+GRID REF:\s*(\d{6}),\s*(\d{6})/);
 
       if (match) {
         var eastings = match[1];  // 6-digit Eastings
         var northings = match[2]; // 6-digit Northings
 
-        // Return the Eastings and Northings
+        // Return the grid reference (Eastings and Northings)
         return {
           eastings: eastings,
           northings: northings
