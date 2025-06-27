@@ -113,13 +113,18 @@
       var file = fileInput.files[0];
 
       if (file) {
+        console.log("File selected: ", file.name); // Debug: Log selected file
+
         // Create a file reader to load the file
         var reader = new FileReader();
         reader.onload = function(e) {
           var pdfData = new Uint8Array(e.target.result);
+          console.log("PDF data loaded: ", pdfData); // Debug: Log PDF data
 
           // Use pdf.js to load and parse the PDF
           pdfjsLib.getDocument(pdfData).promise.then(function(pdf) {
+            console.log("PDF loaded, number of pages: ", pdf.numPages); // Debug: Log number of pages
+
             // Extract text from each page of the PDF
             var pagePromises = [];
             for (var pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
@@ -133,7 +138,7 @@
               var extractedData = [];
               pagesText.forEach(function(pageText) {
                 pageText.items.forEach(function(item) {
-                  console.log(item.str); // Debug: Log the extracted text
+                  console.log("Extracted text: ", item.str); // Debug: Log extracted text
 
                   // Assuming the text contains coordinates and grid references
                   extractedData.push(item.str);
@@ -147,6 +152,8 @@
         };
 
         reader.readAsArrayBuffer(file);
+      } else {
+        console.log("No file selected."); // Debug: Log if no file is selected
       }
     });
 
