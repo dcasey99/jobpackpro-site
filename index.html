@@ -3,98 +3,77 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JobPackPro</title>
+  <title>JobPackPro - Extract Data from PDF</title>
 
-  <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-
-  <!-- Inline Custom Styles for the Map -->
   <style>
     body {
       font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
-      margin: 0;
+      margin: 20px;
       padding: 20px;
-      text-align: center;
+      background-color: #f4f4f4;
     }
     h1 {
-      margin-top: 0;
+      text-align: center;
     }
-    #map {
+    #table-container {
+      margin-top: 30px;
+      overflow-x: auto;
+    }
+    table {
       width: 100%;
-      height: 400px;
-      margin-top: 20px;
-      background-color: #e0e0e0;
+      border-collapse: collapse;
     }
-    form {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin-top: 20px;
+    th, td {
+      padding: 8px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
     }
-    label {
-      font-size: 16px;
-      margin-bottom: 10px;
+    th {
+      background-color: #f2f2f2;
+    }
+    #upload-form {
+      text-align: center;
+      margin-bottom: 20px;
     }
     input[type="file"] {
-      margin-bottom: 10px;
       padding: 10px;
-      font-size: 16px;
-    }
-    button {
-      padding: 10px 20px;
-      font-size: 16px;
-      cursor: pointer;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 5px;
-    }
-    button:hover {
-      background-color: #45a049;
     }
   </style>
 </head>
 <body>
-  <h1>JobPackPro Prototype</h1>
-  <p>Welcome to the JobPackPro field prototype.</p>
+  <h1>Extract Work Pack Data from PDF</h1>
 
-  <div id="map"></div>
-
-  <form id="upload-form">
+  <div id="upload-form">
     <label for="pdf-upload">Upload Job Pack (PDF):</label>
     <input type="file" id="pdf-upload" accept="application/pdf" />
-    <button type="submit">Upload</button>
-  </form>
+  </div>
 
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js"></script>
+  <div id="table-container">
+    <table id="data-table">
+      <thead>
+        <tr>
+          <th>WP</th>
+          <th>WP Type</th>
+          <th>GRID REF</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Extracted data will be populated here -->
+      </tbody>
+    </table>
+  </div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.7.2/proj4.js"></script>
 
   <script>
-    // Initialize the map with a default center and zoom level
-    var map = L.map('map').setView([51.505, -0.09], 13); // Default coordinates for map view (London)
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    }).addTo(map);
-
-    // Define the OSGB36 (EPSG:27700) projection for Eastings and Northings
-    proj4.defs("EPSG:27700", "+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.9996012717 +x_0=400000 +y_0=-100000 +datum=WGS84 +units=m +no_defs");
-
-    // Handle file upload
-    document.getElementById('upload-form').addEventListener('submit', function(event) {
-      event.preventDefault();
-
-      var fileInput = document.getElementById('pdf-upload');
-      var file = fileInput.files[0];
-
+    document.getElementById('pdf-upload').addEventListener('change', function(event) {
+      var file = event.target.files[0];
       if (file) {
         var reader = new FileReader();
         reader.onload = function(e) {
           var pdfData = new Uint8Array(e.target.result);
 
+          // Using PDF.js to extract text from the PDF
           pdfjsLib.getDocument(pdfData).promise.then(function(pdf) {
             var pagePromises = [];
             for (var pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
@@ -111,17 +90,9 @@
                 });
               });
 
-              // Log extracted data to see what we got
-              console.log("Extracted Data:", extractedData);
-
-              // Look for the line with the correct GRID REF for WP1 and extract it
-              extractedData.forEach(function(text) {
-                var gridRefData = extractGridRefsForWP1(text);
-                if (gridRefData) {
-                  console.log("Grid Ref Data for WP1:", gridRefData); // Log the extracted grid reference data
-                  addMarker(gridRefData); // Add the marker to the map
-                }
-              });
+              // Parse the extracted data for WP, WP type, and GRID REF
+              var parsedData = parseExtractedData(extractedData);
+              displayDataInTable(parsedData);
             });
           });
         };
@@ -130,39 +101,43 @@
       }
     });
 
-    // Function to add markers to the map based on the extracted GRID REFs
-    function addMarker(gridRefData) {
-      // Convert Eastings and Northings to Latitude and Longitude using Proj4js
-      var latLng = proj4("EPSG:27700", "EPSG:4326", [gridRefData.eastings, gridRefData.northings]);
+    // Function to parse extracted text and extract WP, WP Type, and GRID REF
+    function parseExtractedData(extractedText) {
+      var wpData = [];
 
-      // Display the GRID REF in the popup content
-      var popupContent = "GRID REF: " + gridRefData.eastings + "," + gridRefData.northings;
+      // Loop through the extracted text
+      extractedText.forEach(function(text) {
+        // Regular expression to match WP lines with GRID REF
+        var match = text.match(/WP(\d+):([^,]+),[^G]+GRID REF:\s*(\d{6}),\s*(\d{6})/);
 
-      // Add a marker to the map at the converted coordinates
-      L.marker([latLng[1], latLng[0]]).addTo(map)
-        .bindPopup(popupContent)
-        .openPopup();
+        if (match) {
+          wpData.push({
+            wpNumber: "WP" + match[1], // WP Number (e.g., WP1)
+            wpType: match[2].trim(), // WP Type (e.g., SM TOBY BOX)
+            gridRef: match[3] + "," + match[4] // GRID REF (e.g., 354039,799852)
+          });
+        }
+      });
+
+      return wpData;
     }
 
-    // Function to extract GRID REFs from the text specifically for WP1
-    function extractGridRefsForWP1(text) {
-      // Look for the pattern "WP1:<anything> AT GRID REF: <Eastings>,<Northings>"
-      var match = text.match(/WP1:[^G]+GRID REF:\s*(\d{6}),\s*(\d{6})/);
+    // Function to display parsed data in a table
+    function displayDataInTable(data) {
+      var tableBody = document.getElementById('data-table').getElementsByTagName('tbody')[0];
+      tableBody.innerHTML = ''; // Clear any existing data
 
-      if (match) {
-        var eastings = match[1];  // 6-digit Eastings
-        var northings = match[2]; // 6-digit Northings
+      data.forEach(function(item) {
+        var row = tableBody.insertRow();
+        var cell1 = row.insertCell(0);
+        var cell2 = row.insertCell(1);
+        var cell3 = row.insertCell(2);
 
-        // Return the grid reference (Eastings and Northings)
-        return {
-          eastings: eastings,
-          northings: northings
-        };
-      }
-
-      return null;
+        cell1.textContent = item.wpNumber;
+        cell2.textContent = item.wpType;
+        cell3.textContent = item.gridRef;
+      });
     }
   </script>
-
 </body>
 </html>
