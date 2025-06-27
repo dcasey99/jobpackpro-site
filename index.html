@@ -38,6 +38,18 @@
     input[type="file"] {
       padding: 10px;
     }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
   </style>
 </head>
 <body>
@@ -46,6 +58,7 @@
   <div id="upload-form">
     <label for="pdf-upload">Upload Job Pack (PDF):</label>
     <input type="file" id="pdf-upload" accept="application/pdf" />
+    <button id="upload-button">Submit</button>
   </div>
 
   <div id="table-container">
@@ -66,8 +79,13 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
 
   <script>
-    document.getElementById('pdf-upload').addEventListener('change', function(event) {
-      var file = event.target.files[0];
+    // Wait for the submit button to be clicked
+    document.getElementById('upload-button').addEventListener('click', function(event) {
+      event.preventDefault();  // Prevent form submission
+
+      var fileInput = document.getElementById('pdf-upload');
+      var file = fileInput.files[0];
+
       if (file) {
         var reader = new FileReader();
         reader.onload = function(e) {
@@ -90,7 +108,10 @@
                 });
               });
 
-              // Parse the extracted data for WP, WP type, and GRID REF
+              // Log extracted data to see what we got
+              console.log("Extracted Data:", extractedData);
+
+              // Look for the line with the correct GRID REF for WP1 and extract it
               var parsedData = parseExtractedData(extractedData);
               displayDataInTable(parsedData);
             });
@@ -98,6 +119,8 @@
         };
 
         reader.readAsArrayBuffer(file);
+      } else {
+        alert("Please select a PDF file to upload.");
       }
     });
 
