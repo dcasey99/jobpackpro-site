@@ -79,7 +79,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
 
   <script>
-    // Debugging log to check when the button is clicked
+    // Wait for the submit button to be clicked
     document.getElementById('upload-button').addEventListener('click', function(event) {
       event.preventDefault();  // Prevent form submission
       console.log("Submit button clicked!");  // This will show in console when submit is clicked
@@ -116,6 +116,9 @@
 
               console.log("Extracted Data:", extractedData);  // Log the extracted text
 
+              // Now we will log some sample extracted lines to help with debugging
+              console.log("Sample extracted lines:", extractedData.slice(0, 10));  // Show the first 10 lines for debugging
+
               // Parse the extracted data for WP, WP type, and GRID REF
               var parsedData = parseExtractedData(extractedData);
               console.log("Parsed Data: ", parsedData);  // Log the parsed data
@@ -134,11 +137,16 @@
     // Function to parse extracted text and extract WP, WP Type, and GRID REF
     function parseExtractedData(extractedText) {
       var wpData = [];
-      extractedText.forEach(function(text) {
-        // Regular expression to match WP lines with GRID REF
-        var match = text.match(/WP(\d+):([^,]+),[^G]+GRID REF:\s*(\d{6}),\s*(\d{6})/);
 
+      // Loop through the extracted text
+      extractedText.forEach(function(text) {
+        // Use a more flexible regular expression to capture WP info with GRID REF
+        var match = text.match(/WP(\d+):\s*([^,]+),[^G]+GRID REF:\s*(\d{6}),\s*(\d{6})/);
+
+        // If a match is found, process the data
         if (match) {
+          console.log("Match found: ", match);  // Log the matched line for debugging
+
           wpData.push({
             wpNumber: "WP" + match[1], // WP Number (e.g., WP1)
             wpType: match[2].trim(), // WP Type (e.g., SM TOBY BOX)
