@@ -73,7 +73,6 @@
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.7.2/proj4.js"></script>
 
   <script>
     var map = L.map('map').setView([51.505, -0.09], 13);
@@ -109,7 +108,13 @@
                 });
               });
 
-              addMarkersToMap(extractedData);
+              // Process the extracted data to find GRID REFs
+              extractedData.forEach(function(text) {
+                var coordinates = extractCoordinates(text);
+                if (coordinates) {
+                  addMarker(coordinates.eastings, coordinates.northings, text);
+                }
+              });
             });
           });
         };
@@ -118,36 +123,38 @@
       }
     });
 
-    function addMarkersToMap(data) {
-      data.forEach(function(item) {
-        var coordinates = extractCoordinates(item);
+    // Function to add markers to the map based on the extracted data
+    function addMarker(eastings, northings, label) {
+      // Example: Showing the GRID REF in the popup alongside the label
+      var popupContent = label + "<br>GRID REF: " + eastings + "," + northings;
 
-        if (coordinates) {
-          L.marker([coordinates.lat, coordinates.lng]).addTo(map)
-            .bindPopup(item)
-            .openPopup();
-        }
-      });
+      // For simplicity, we assume a fixed lat/lng for the demonstration, 
+      // but you should extract the correct coordinates for each marker.
+      var lat = 51.505; 
+      var lng = -0.09; // Replace with actual conversion logic if needed
+
+      // Add a marker with the label and GRID REF
+      L.marker([lat, lng]).addTo(map)
+        .bindPopup(popupContent)
+        .openPopup();
     }
 
+    // Function to extract Eastings and Northings from the text
     function extractCoordinates(text) {
-      // Look for the pattern "GRID REF: Easting, Northing" (e.g., GRID REF: 354039,799852)
+      // Look for the pattern "GRID REF: Easting, Northing" (e.g., GRID REF: 354042,799857)
       var match = text.match(/GRID REF:\s*(\d{6}),\s*(\d{6})/);
 
       if (match) {
-        console.log("Eastings and Northings found: ", match[1], match[2]);
+        var eastings = match[1];  // Save Eastings as a string
+        var northings = match[2]; // Save Northings as a string
 
-        var eastings = parseInt(match[1]);
-        var northings = parseInt(match[2]);
-
-        // Convert Eastings and Northings to Latitude and Longitude using proj4js (WGS84)
-        var wgs84Coordinates = proj4('EPSG:27700', 'EPSG:4326', [eastings, northings]);
-
-        return { lat: wgs84Coordinates[1], lng: wgs84Coordinates[0] };
+        // Return the Eastings and Northings as strings
+        return { eastings: eastings, northings: northings };
       }
 
       return null;
     }
   </script>
+
 </body>
 </html>
