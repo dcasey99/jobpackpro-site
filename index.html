@@ -91,7 +91,7 @@
 
   <!-- Custom JavaScript -->
   <script>
-        // Initialize the map with a default center and zoom level
+    // Initialize the map with a default center and zoom level
     var map = L.map('map').setView([51.505, -0.09], 13); // Lat, Lng, zoom level
 
     // Add a tile layer (OpenStreetMap in this case)
@@ -161,25 +161,36 @@
     // Function to add markers to the map based on the extracted data
     function addMarkersToMap(data) {
       data.forEach(function(item) {
+        // Debugging the extracted text
+        console.log("Extracted Text: ", item);  // Log extracted text
+
+        // Extract coordinates from the text
         var coordinates = extractCoordinates(item);
+
+        // If coordinates are found, add a marker to the map
         if (coordinates) {
+          console.log("Adding marker at: ", coordinates);  // Log coordinates for debugging
           L.marker([coordinates.lat, coordinates.lng]).addTo(map)
-            .bindPopup(item) // Display extracted text in the popup
+            .bindPopup(item) // Display the extracted text in the popup
             .openPopup();
         }
       });
     }
 
-    // Helper function to extract coordinates (adapt this based on your PDF data structure)
+    // Helper function to extract coordinates from the text
     function extractCoordinates(text) {
-      // Example: Find coordinates in the format "lat,lng" within the text
+      // Example: Find coordinates in the format "lat,lng" (e.g., 51.505, -0.09)
       var match = text.match(/([+-]?\d+\.\d+),\s*([+-]?\d+\.\d+)/);
+
+      // If coordinates are found, return them as an object
       if (match) {
+        console.log("Coordinates found: ", match[1], match[2]);  // Log coordinates
         return { lat: parseFloat(match[1]), lng: parseFloat(match[2]) };
       }
+
+      // If no coordinates are found, return null
       return null;
     }
-
   </script>
 
 </body>
