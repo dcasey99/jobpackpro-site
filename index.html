@@ -129,15 +129,14 @@
 
     // Function to add markers to the map based on the extracted data
     function addMarker(markerData) {
-      // Example: Showing WP number, Work Point Type, and GRID REF in the popup
+      // Show WP number, Work Point Type, and GRID REF in the popup
       var popupContent = markerData.wpNumber + ": " + markerData.wpType + "<br>GRID REF: " + markerData.eastings + "," + markerData.northings;
 
-      // For simplicity, we assume fixed lat/lng for now. You can convert Eastings and Northings if needed.
-      var lat = 51.505; 
-      var lng = -0.09; 
+      // Convert Eastings and Northings to Latitude and Longitude using proj4js
+      var wgs84Coordinates = proj4('EPSG:27700', 'EPSG:4326', [markerData.eastings, markerData.northings]);
 
-      // Add a marker with the WP number, Work Point Type, and GRID REF
-      L.marker([lat, lng]).addTo(map)
+      // Add a marker at the correct latitude and longitude
+      L.marker([wgs84Coordinates[1], wgs84Coordinates[0]]).addTo(map)
         .bindPopup(popupContent)
         .openPopup();
     }
