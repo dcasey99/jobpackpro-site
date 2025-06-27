@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -82,14 +83,18 @@
     // Wait for the submit button to be clicked
     document.getElementById('upload-button').addEventListener('click', function(event) {
       event.preventDefault();  // Prevent form submission
+      console.log("Submit button clicked!");
 
       var fileInput = document.getElementById('pdf-upload');
       var file = fileInput.files[0];
 
       if (file) {
+        console.log("File selected: ", file.name);
+
         var reader = new FileReader();
         reader.onload = function(e) {
           var pdfData = new Uint8Array(e.target.result);
+          console.log("PDF data loaded...");
 
           // Using PDF.js to extract text from the PDF
           pdfjsLib.getDocument(pdfData).promise.then(function(pdf) {
@@ -108,11 +113,12 @@
                 });
               });
 
-              // Log extracted data to see what we got
               console.log("Extracted Data:", extractedData);
 
-              // Look for the line with the correct GRID REF for WP1 and extract it
+              // Parse the extracted data for WP, WP type, and GRID REF
               var parsedData = parseExtractedData(extractedData);
+              console.log("Parsed Data: ", parsedData);
+
               displayDataInTable(parsedData);
             });
           });
@@ -127,8 +133,6 @@
     // Function to parse extracted text and extract WP, WP Type, and GRID REF
     function parseExtractedData(extractedText) {
       var wpData = [];
-
-      // Loop through the extracted text
       extractedText.forEach(function(text) {
         // Regular expression to match WP lines with GRID REF
         var match = text.match(/WP(\d+):([^,]+),[^G]+GRID REF:\s*(\d{6}),\s*(\d{6})/);
@@ -149,6 +153,10 @@
     function displayDataInTable(data) {
       var tableBody = document.getElementById('data-table').getElementsByTagName('tbody')[0];
       tableBody.innerHTML = ''; // Clear any existing data
+
+      if (data.length === 0) {
+        console.log("No valid WP data found!");
+      }
 
       data.forEach(function(item) {
         var row = tableBody.insertRow();
