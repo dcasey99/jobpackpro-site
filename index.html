@@ -90,6 +90,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
 
   <!-- Custom JavaScript -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.7.2/proj4.js"></script> <!-- proj4js for coordinate transformation -->
+
   <script>
     // Initialize the map with a default center and zoom level
     var map = L.map('map').setView([51.505, -0.09], 13); // Lat, Lng, zoom level
@@ -141,7 +143,7 @@
                 pageText.items.forEach(function(item) {
                   console.log("Extracted text: ", item.str); // Debug: Log extracted text
 
-                  // Assuming the text contains coordinates and grid references
+                  // Assuming the text contains Eastings and Northings
                   extractedData.push(item.str);
                 });
               });
@@ -161,13 +163,12 @@
     // Function to add markers to the map based on the extracted data
     function addMarkersToMap(data) {
       data.forEach(function(item) {
-        // Debugging the extracted text
-        console.log("Extracted Text: ", item);  // Log extracted text
+        console.log("Extracted Text: ", item);  // Log the extracted text
 
-        // Extract coordinates from the text
+        // Extract Eastings and Northings from the text
         var coordinates = extractCoordinates(item);
 
-        // If coordinates are found, add a marker to the map
+        // If coordinates are found, convert and add a marker to the map
         if (coordinates) {
           console.log("Adding marker at: ", coordinates);  // Log coordinates for debugging
           L.marker([coordinates.lat, coordinates.lng]).addTo(map)
@@ -177,18 +178,26 @@
       });
     }
 
-    // Helper function to extract coordinates from the text
+    // Helper function to extract Eastings and Northings and convert to lat/lng
     function extractCoordinates(text) {
-      // Example: Find coordinates in the format "lat,lng" (e.g., 51.505, -0.09)
-      var match = text.match(/([+-]?\d+\.\d+),\s*([+-]?\d+\.\d+)/);
+      // Example: Find Eastings and Northings in the format "Eastings Northings" (e.g., 654321 123456)
+      var match = text.match(/(\d{6})\s+(\d{6})/);
 
-      // If coordinates are found, return them as an object
+      // If Eastings and Northings are found, convert them to lat/lng
       if (match) {
-        console.log("Coordinates found: ", match[1], match[2]);  // Log coordinates
-        return { lat: parseFloat(match[1]), lng: parseFloat(match[2]) };
+        console.log("Eastings and Northings found: ", match[1], match[2]);  // Log Eastings and Northings
+
+        // Convert Eastings and Northings to Latitude and Longitude using proj4js (WGS84)
+        var eastings = parseInt(match[1]);
+        var northings = parseInt(match[2]);
+
+        // Example transformation from OSGB36 to WGS84
+        var wgs84Coordinates = proj4('EPSG:27700', 'EPSG:4326', [eastings, northings]);
+
+        return { lat: wgs84Coordinates[1], lng: wgs84Coordinates[0] };
       }
 
-      // If no coordinates are found, return null
+      // If no Eastings and Northings found, return null
       return null;
     }
   </script>
