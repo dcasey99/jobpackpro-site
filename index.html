@@ -6,65 +6,32 @@
   <title>JobPackPro</title>
 
   <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+  <!-- Your custom styles -->
   <link rel="stylesheet" href="assets/styles.css" />
 
-  <!-- Custom styles -->
+  <!-- Inline Custom Styles for the Map -->
   <style>
-    /* General Styles */
+    /* General styles */
     body {
       font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
       margin: 0;
       padding: 20px;
-      background-color: #f4f4f4;
-    }
-
-    /* Header Styling */
-    h1 {
       text-align: center;
-      color: #333;
     }
 
-    /* Map Container */
+    h1 {
+      margin-top: 0;
+    }
+
+    /* Map container with proper height and width */
     #map {
-      width: 100%;              /* Full width of the parent container */
-      height: 400px;            /* Fixed height for the map */
-      background-color: #e0e0e0; /* Light grey background */
-      margin-top: 20px;          /* Space between form and map */
-      border: 1px solid #ccc;   /* Border around the map for visual clarity */
-      box-sizing: border-box;    /* Ensures padding/borders are included in the total width/height */
-    }
-
-    /* Form Styling */
-    form {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      width: 100%; /* Full width */
+      height: 400px; /* Set a fixed height */
       margin-top: 20px;
-    }
-
-    label {
-      font-size: 16px;
-      margin-bottom: 10px;
-    }
-
-    input[type="file"] {
-      margin-bottom: 10px;
-      padding: 10px;
-      font-size: 16px;
-    }
-
-    button {
-      padding: 10px 20px;
-      font-size: 16px;
-      cursor: pointer;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 5px;
-    }
-
-    button:hover {
-      background-color: #45a049;
+      background-color: #e0e0e0; /* Light background to show the map container */
     }
   </style>
 </head>
@@ -74,17 +41,6 @@
 
   <!-- Map container -->
   <div id="map"></div>
-
-  <!-- File Upload Form -->
-  <form id="upload-form">
-    <label for="pdf-upload">Upload Job Pack (PDF):</label>
-    <input type="file" id="pdf-upload" accept="application/pdf" />
-    <button type="submit">Upload</button>
-  </form>
-
-  <!-- pdf.js (with worker script) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
 
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
@@ -103,71 +59,6 @@
     L.marker([51.5, -0.09]).addTo(map)
       .bindPopup('A test marker')
       .openPopup();
-
-    // Handle PDF Upload and Parsing
-    document.getElementById('upload-form').addEventListener('submit', function(event) {
-      event.preventDefault();
-
-      // Get the uploaded file
-      var fileInput = document.getElementById('pdf-upload');
-      var file = fileInput.files[0];
-
-      if (file) {
-        // Create a file reader to load the file
-        var reader = new FileReader();
-        reader.onload = function(e) {
-          var pdfData = new Uint8Array(e.target.result);
-
-          // Use pdf.js to load and parse the PDF
-          pdfjsLib.getDocument(pdfData).promise.then(function(pdf) {
-            // Extract text from each page of the PDF
-            var pagePromises = [];
-            for (var pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-              pagePromises.push(pdf.getPage(pageNum).then(function(page) {
-                return page.getTextContent();
-              }));
-            }
-
-            // When all pages are processed, process the extracted text
-            Promise.all(pagePromises).then(function(pagesText) {
-              var extractedData = [];
-              pagesText.forEach(function(pageText) {
-                pageText.items.forEach(function(item) {
-                  console.log(item.str); // Debug: Log the extracted text
-
-                  // Assuming the text contains coordinates and grid references
-                  extractedData.push(item.str);
-                });
-              });
-
-              addMarkersToMap(extractedData);
-            });
-          });
-        };
-
-        reader.readAsArrayBuffer(file);
-      }
-    });
-
-    function addMarkersToMap(data) {
-      data.forEach(function(item) {
-        var coordinates = extractCoordinates(item);
-        if (coordinates) {
-          L.marker([coordinates.lat, coordinates.lng]).addTo(map)
-            .bindPopup(item) // Display extracted text in the popup
-            .openPopup();
-        }
-      });
-    }
-
-    function extractCoordinates(text) {
-      var match = text.match(/([+-]?\d+\.\d+),\s*([+-]?\d+\.\d+)/);
-      if (match) {
-        return { lat: parseFloat(match[1]), lng: parseFloat(match[2]) };
-      }
-      return null;
-    }
   </script>
-
 </body>
 </html>
