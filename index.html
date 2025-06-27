@@ -6,17 +6,71 @@
   <title>JobPackPro</title>
 
   <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="styles.css" />
-
-  <!-- Your custom styles -->
   <link rel="stylesheet" href="assets/styles.css" />
+
+  <!-- Custom styles -->
+  <style>
+    /* General Styles */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f4f4f4;
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+
+    /* Map Container */
+    #map {
+      width: 100%;
+      height: 400px;
+      margin-top: 20px;
+      background-color: #e0e0e0;
+    }
+
+    /* Form Styling */
+    form {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 20px;
+    }
+
+    label {
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+
+    input[type="file"] {
+      margin-bottom: 10px;
+      padding: 10px;
+      font-size: 16px;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+  </style>
 </head>
 <body>
   <h1>JobPackPro Prototype</h1>
   <p>Welcome to the JobPackPro field prototype.</p>
 
   <!-- Map container -->
-  <div id="map" style="width: 100%; height: 400px;"></div>
+  <div id="map"></div>
 
   <!-- File Upload Form -->
   <form id="upload-form">
@@ -28,6 +82,7 @@
   <!-- pdf.js (with worker script) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
+
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
@@ -77,19 +132,17 @@
                 // Loop through the text items of each page
                 pageText.items.forEach(function(item) {
                   // Check for data you need (e.g., grid refs, structure types)
-                  // For simplicity, we just log all text here:
-                  console.log(item.str);
-                  
+                  console.log(item.str); // Debug: Log the extracted text
+
                   // Assuming the text contains coordinates and grid references
-                  // Example: Extract some data (this will be tailored based on your job pack structure)
                   extractedData.push(item.str);
                 });
               });
 
               // Now you have the extracted data. You can start using this data for the map markers
               console.log(extractedData);
-              
-              // Here we would pass the extracted data to the map (we’ll handle that below)
+
+              // Pass the extracted data to the map (we’ll handle that below)
               addMarkersToMap(extractedData);
             });
           });
@@ -103,13 +156,11 @@
     // Function to add markers to the map based on the extracted data
     function addMarkersToMap(data) {
       // Example: We assume `data` contains coordinates and grid references
-      // This part will need to be adjusted based on the actual data format in the PDF
-      
+      // You’ll need to adapt this to match your data format
+
       data.forEach(function(item) {
-        // Extract coordinates from the data (this is just an example)
-        // You’ll need to adapt this to match how your job pack data is formatted
         var coordinates = extractCoordinates(item);
-        
+
         if (coordinates) {
           var lat = coordinates.lat;
           var lng = coordinates.lng;
@@ -135,3 +186,4 @@
 
 </body>
 </html>
+
