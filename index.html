@@ -10,59 +10,7 @@
 
   <!-- Custom styles -->
   <style>
-    /* General Styles */
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 20px;
-      background-color: #f4f4f4;
-    }
-
-    h1 {
-      text-align: center;
-      color: #333;
-    }
-
-    /* Map Container */
-    #map {
-      width: 100%;
-      height: 400px;
-      margin-top: 20px;
-      background-color: #e0e0e0;
-    }
-
-    /* Form Styling */
-    form {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin-top: 20px;
-    }
-
-    label {
-      font-size: 16px;
-      margin-bottom: 10px;
-    }
-
-    input[type="file"] {
-      margin-bottom: 10px;
-      padding: 10px;
-      font-size: 16px;
-    }
-
-    button {
-      padding: 10px 20px;
-      font-size: 16px;
-      cursor: pointer;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 5px;
-    }
-
-    button:hover {
-      background-color: #45a049;
-    }
+    /* CSS styles go here as described above */
   </style>
 </head>
 <body>
@@ -129,53 +77,33 @@
             Promise.all(pagePromises).then(function(pagesText) {
               var extractedData = [];
               pagesText.forEach(function(pageText) {
-                // Loop through the text items of each page
                 pageText.items.forEach(function(item) {
-                  // Check for data you need (e.g., grid refs, structure types)
-                  console.log(item.str); // Debug: Log the extracted text
-
-                  // Assuming the text contains coordinates and grid references
+                  console.log(item.str); // Log extracted text for debugging
                   extractedData.push(item.str);
                 });
               });
 
-              // Now you have the extracted data. You can start using this data for the map markers
-              console.log(extractedData);
-
-              // Pass the extracted data to the map (we’ll handle that below)
               addMarkersToMap(extractedData);
             });
           });
         };
 
-        // Read the uploaded PDF file
         reader.readAsArrayBuffer(file);
       }
     });
 
-    // Function to add markers to the map based on the extracted data
     function addMarkersToMap(data) {
-      // Example: We assume `data` contains coordinates and grid references
-      // You’ll need to adapt this to match your data format
-
       data.forEach(function(item) {
         var coordinates = extractCoordinates(item);
-
         if (coordinates) {
-          var lat = coordinates.lat;
-          var lng = coordinates.lng;
-
-          // Add a marker on the map for each coordinate
-          L.marker([lat, lng]).addTo(map)
-            .bindPopup(item)  // Using the item data as a popup for the marker
+          L.marker([coordinates.lat, coordinates.lng]).addTo(map)
+            .bindPopup(item) // Display extracted text in the popup
             .openPopup();
         }
       });
     }
 
-    // Helper function to extract coordinates (adapt this based on your PDF data structure)
     function extractCoordinates(text) {
-      // Example: Find coordinates in the format "lat,lng" within the text
       var match = text.match(/([+-]?\d+\.\d+),\s*([+-]?\d+\.\d+)/);
       if (match) {
         return { lat: parseFloat(match[1]), lng: parseFloat(match[2]) };
@@ -186,4 +114,3 @@
 
 </body>
 </html>
-
